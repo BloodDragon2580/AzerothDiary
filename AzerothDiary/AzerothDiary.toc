@@ -1,5 +1,5 @@
 ## Interface: 120100, 120007, 120005
-## Title: Azeroth Diary
+## Title:|cffd6266cAzeroth Diary|r
 ## Notes: Your adventures. Your memories. Your story.
 ## Notes-deDE: Deine Abenteuer. Deine Erinnerungen. Deine Geschichte.
 ## Author: BloodDragon2580
