@@ -180,12 +180,15 @@ function AD:CreateUI()
 end
 
 function AD:CreateTimelinePanel(parent)
-    local panel = CreateFrame("Frame", nil, parent)
+    -- The timeline uses the same framed panel treatment as the other tabs.
+    -- This keeps the outer border continuous at all UI scales instead of
+    -- leaving search/filter/list controls visually floating on the main frame.
+    local panel = createPanel(parent)
     panel:SetAllPoints()
     self.timelinePanel = panel
 
     local search = createEditBox(panel, 300, 32, false)
-    search:SetPoint("TOPLEFT", 0, 0)
+    search:SetPoint("TOPLEFT", 10, -10)
     self.timelineSearch = search
     local placeholder = search:CreateFontString(nil, "OVERLAY", "GameFontDisable")
     placeholder:SetPoint("LEFT", 10, 0)
@@ -235,11 +238,11 @@ function AD:CreateTimelinePanel(parent)
     self.filterButtons = filters
 
     local rows = {}
-    local rowTop = -82
+    local rowTop = -84
     for i = 1, ROWS_PER_PAGE do
         local row = createPanel(panel)
-        row:SetPoint("TOPLEFT", 0, rowTop - ((i - 1) * TIMELINE_ROW_STEP))
-        row:SetPoint("TOPRIGHT", 0, rowTop - ((i - 1) * TIMELINE_ROW_STEP))
+        row:SetPoint("TOPLEFT", 10, rowTop - ((i - 1) * TIMELINE_ROW_STEP))
+        row:SetPoint("TOPRIGHT", -10, rowTop - ((i - 1) * TIMELINE_ROW_STEP))
         row:SetHeight(TIMELINE_ROW_HEIGHT)
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(36, 36)
@@ -282,8 +285,8 @@ function AD:CreateTimelinePanel(parent)
     -- Keep pagination in a dedicated footer so timeline rows can never
     -- overlap or intercept the navigation controls.
     local footer = CreateFrame("Frame", nil, panel)
-    footer:SetPoint("BOTTOMLEFT", 0, 0)
-    footer:SetPoint("BOTTOMRIGHT", 0, 0)
+    footer:SetPoint("BOTTOMLEFT", 10, 6)
+    footer:SetPoint("BOTTOMRIGHT", -10, 6)
     footer:SetHeight(TIMELINE_FOOTER_HEIGHT)
     footer:SetFrameLevel(panel:GetFrameLevel() + 20)
     self.timelineFooter = footer

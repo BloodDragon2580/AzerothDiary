@@ -1,6 +1,6 @@
 local ADDON_NAME, AD = ...
 
-AD.VERSION = "1.2"
+AD.VERSION = "1.3"
 AD.SCHEMA_VERSION = 3
 
 AD.DEFAULTS = {
