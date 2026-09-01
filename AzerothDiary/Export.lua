@@ -22,6 +22,68 @@ local function attrEscape(value)
     return htmlEscape(value):gsub("\n", " "):gsub("\r", " ")
 end
 
+
+local function positiveInteger(value)
+    value = tonumber(value)
+    if not value or value <= 0 then return nil end
+    return math.floor(value)
+end
+
+local function getWowheadTarget(entry)
+    local d = entry and entry.data or {}
+    if not entry then return nil end
+
+    if entry.kind == "achievement" then
+        local id = positiveInteger(d.id)
+        if id then return "achievement", id, "achievement=" .. id end
+    elseif entry.kind == "mount" then
+        local id = positiveInteger(d.id)
+        if id then return "mount", id, "mount=" .. id end
+    elseif entry.kind == "pet" then
+        local id = positiveInteger(d.speciesID)
+        if id then return "battle-pet", id, "battle-pet=" .. id end
+    elseif entry.kind == "toy" then
+        local id = positiveInteger(d.id)
+        if id then return "item", id, "item=" .. id end
+    elseif entry.kind == "transmog" then
+        local id = positiveInteger(d.itemID)
+        if id then return "item", id, "item=" .. id end
+    elseif entry.kind == "quest" then
+        local id = positiveInteger(d.id)
+        if id then return "quest", id, "quest=" .. id end
+    end
+    return nil
+end
+
+local function wowheadLink(entry, label, language)
+    local pageType, id, tooltipData = getWowheadTarget(entry)
+    if not pageType then return htmlEscape(label) end
+
+    local isGerman = language == "de"
+    local host = isGerman and "https://de.wowhead.com" or "https://www.wowhead.com"
+    local href
+    if pageType == "mount" or pageType == "battle-pet" then
+        href = host .. "/" .. pageType .. "/" .. id
+    else
+        href = host .. "/" .. pageType .. "=" .. id
+    end
+
+    if entry.kind == "achievement" then
+        local who = tostring(entry.charName or ""):gsub("[&=]", "")
+        if who ~= "" then
+            tooltipData = tooltipData .. "&who=" .. who
+        end
+        if tonumber(entry.ts) then
+            tooltipData = tooltipData .. "&when=" .. tostring(math.floor(tonumber(entry.ts) * 1000))
+        end
+    end
+    if isGerman then
+        tooltipData = tooltipData .. "&domain=de"
+    end
+
+    return "<a class=\"wh-link\" href=\"" .. attrEscape(href) .. "\" data-wowhead=\"" .. attrEscape(tooltipData) .. "\" target=\"_blank\" rel=\"noopener noreferrer\">" .. htmlEscape(label) .. "</a>"
+end
+
 local HTML_ICONS = {
     achievement = "🏆",
     mount = "🐉",
@@ -37,13 +99,14 @@ local HTML_ICONS = {
     manual = "❤️",
 }
 
-function AD:GenerateHTML(currentCharacterOnly)
+function AD:GenerateHTML(currentCharacterOnly, useWowhead)
     local entries = self:GetFilteredEntries("all", currentCharacterOnly, "")
     local stats = self:GetOverviewStats(currentCharacterOnly)
     local chunks = {}
     local function add(s) chunks[#chunks + 1] = s end
 
     local language = self:GetLanguage() == "deDE" and "de" or "en"
+    useWowhead = useWowhead == true
     local generated = self:FormatDate(time(), true)
     local title = self:L("HTML_TITLE")
     local subtitle = self:L("HTML_SUBTITLE")
@@ -65,8 +128,12 @@ function AD:GenerateHTML(currentCharacterOnly)
 
     add("<!DOCTYPE html><html lang=\"" .. language .. "\"><head><meta charset=\"utf-8\">")
     add("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>" .. htmlEscape(title) .. "</title>")
+    if useWowhead then
+        -- Official Wowhead tooltip loader. The diary and its filters still work if this remote script is unavailable.
+        add([[<script>const whTooltips={colorLinks:false,iconizeLinks:false,renameLinks:false};</script><script src="https://wow.zamimg.com/js/tooltips.js"></script>]])
+    end
     add([[<style>
-:root{color-scheme:dark;--bg:#080b12;--panel:#101625;--panel2:#161e30;--line:#28344e;--text:#eef2ff;--muted:#99a6c1;--gold:#d9ad5b;--blue:#69a7ff;--violet:#9a7cff;--green:#73d39b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#17213a 0,#080b12 34%,#05070c 100%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}.wrap{max-width:1180px;margin:auto;padding:42px 20px 70px}.hero{padding:34px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,rgba(217,173,91,.10),rgba(105,167,255,.04)),rgba(16,22,37,.92)}h1{font-size:clamp(2.1rem,5vw,4rem);margin:0 0 8px;letter-spacing:-.04em}.tag{color:var(--gold);font-weight:700}.muted{color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.stat{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.stat b{display:block;font-size:1.7rem;margin-top:4px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin:24px 0}.tools input,.tools select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:#0b1020;color:var(--text);font-size:1rem}.timeline{display:grid;gap:12px}.memory{display:grid;grid-template-columns:54px 1fr auto;gap:15px;align-items:start;padding:18px;border:1px solid var(--line);border-radius:16px;background:rgba(16,22,37,.92)}.memory[hidden]{display:none!important}.ico{display:grid;place-items:center;width:50px;height:50px;border-radius:14px;background:var(--panel2);font-size:1.55rem}.kind{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:800}.memory h2{font-size:1.05rem;margin:4px 0}.detail{color:var(--muted);line-height:1.5;white-space:pre-wrap}.where{margin-top:8px;color:#7f8da9;font-size:.86rem}.when{text-align:right;color:var(--muted);font-size:.84rem;white-space:nowrap}.char{color:var(--blue);font-weight:700;margin-top:5px}.empty{display:none;padding:40px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}footer{margin-top:32px;text-align:center;color:#72809c;font-size:.85rem}@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.tools{grid-template-columns:1fr}.memory{grid-template-columns:46px 1fr}.when{grid-column:2;text-align:left}.hero{padding:24px}}@media(max-width:420px){.stats{grid-template-columns:1fr}.wrap{padding:20px 12px 50px}}
+:root{color-scheme:dark;--bg:#080b12;--panel:#101625;--panel2:#161e30;--line:#28344e;--text:#eef2ff;--muted:#99a6c1;--gold:#d9ad5b;--blue:#69a7ff;--violet:#9a7cff;--green:#73d39b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#17213a 0,#080b12 34%,#05070c 100%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}.wrap{max-width:1180px;margin:auto;padding:42px 20px 70px}.hero{padding:34px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,rgba(217,173,91,.10),rgba(105,167,255,.04)),rgba(16,22,37,.92)}h1{font-size:clamp(2.1rem,5vw,4rem);margin:0 0 8px;letter-spacing:-.04em}.tag{color:var(--gold);font-weight:700}.muted{color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.stat{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.stat b{display:block;font-size:1.7rem;margin-top:4px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin:24px 0}.tools input,.tools select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:#0b1020;color:var(--text);font-size:1rem}.timeline{display:grid;gap:12px}.memory{display:grid;grid-template-columns:54px 1fr auto;gap:15px;align-items:start;padding:18px;border:1px solid var(--line);border-radius:16px;background:rgba(16,22,37,.92)}.memory[hidden]{display:none!important}.ico{display:grid;place-items:center;width:50px;height:50px;border-radius:14px;background:var(--panel2);font-size:1.55rem}.kind{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:800}.memory h2{font-size:1.05rem;margin:4px 0}.wh-link{color:var(--gold);text-decoration:none;border-bottom:1px dotted rgba(217,173,91,.55)}.wh-link:hover,.wh-link:focus{color:#f3ca7a;border-bottom-color:#f3ca7a}.detail{color:var(--muted);line-height:1.5;white-space:pre-wrap}.where{margin-top:8px;color:#7f8da9;font-size:.86rem}.when{text-align:right;color:var(--muted);font-size:.84rem;white-space:nowrap}.char{color:var(--blue);font-weight:700;margin-top:5px}.empty{display:none;padding:40px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}footer{margin-top:32px;text-align:center;color:#72809c;font-size:.85rem}@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.tools{grid-template-columns:1fr}.memory{grid-template-columns:46px 1fr}.when{grid-column:2;text-align:left}.hero{padding:24px}}@media(max-width:420px){.stats{grid-template-columns:1fr}.wrap{padding:20px 12px 50px}}
 </style></head><body><main class="wrap">]])
 
     add("<section class=\"hero\"><div class=\"tag\">" .. htmlEscape(self:L("HTML_KICKER")) .. "</div><h1>" .. htmlEscape(title) .. "</h1><p>" .. htmlEscape(subtitle) .. "</p><div class=\"muted\">" .. htmlEscape(self:L("HTML_GENERATED", generated)) .. "</div></section>")
@@ -97,7 +164,8 @@ function AD:GenerateHTML(currentCharacterOnly)
         end
         local searchBlob = table.concat({ titleText or "", detail or "", entry.charName or "", entry.realm or "", location, self:GetKindLabel(entry.kind) or "" }, " ")
         add("<article class=\"memory\" data-cat=\"" .. attrEscape(entry.kind) .. "\" data-char=\"" .. attrEscape(entry.charKey or "") .. "\" data-search=\"" .. attrEscape(searchBlob) .. "\">")
-        add("<div class=\"ico\">" .. (HTML_ICONS[entry.kind] or "📖") .. "</div><div><div class=\"kind\">" .. htmlEscape(self:GetKindLabel(entry.kind)) .. "</div><h2>" .. htmlEscape(titleText) .. "</h2>")
+        local titleHTML = useWowhead and wowheadLink(entry, titleText, language) or htmlEscape(titleText)
+        add("<div class=\"ico\">" .. (HTML_ICONS[entry.kind] or "📖") .. "</div><div><div class=\"kind\">" .. htmlEscape(self:GetKindLabel(entry.kind)) .. "</div><h2>" .. titleHTML .. "</h2>")
         if detail and detail ~= "" then add("<div class=\"detail\">" .. htmlEscape(detail) .. "</div>") end
         add("<div class=\"where\">📍 " .. htmlEscape(location) .. "</div></div><div class=\"when\">" .. htmlEscape(self:FormatDate(entry.ts, true)) .. "<div class=\"char\">" .. htmlEscape(entry.charName or entry.charKey or "") .. "</div></div></article>")
     end

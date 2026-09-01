@@ -1,7 +1,7 @@
 local ADDON_NAME, AD = ...
 
-AD.VERSION = "1.0"
-AD.SCHEMA_VERSION = 2
+AD.VERSION = "1.1.0"
+AD.SCHEMA_VERSION = 3
 
 AD.DEFAULTS = {
     schemaVersion = AD.SCHEMA_VERSION,
@@ -21,6 +21,7 @@ AD.DEFAULTS = {
         bossFirstOnly = true,
         mythicPlusBestOnly = true,
         itemLevelStep = 2,
+        htmlWowheadTooltips = true,
         tracking = {
             achievement = true,
             mount = true,
@@ -86,6 +87,16 @@ function AD:InitializeDB()
             end
             if AzerothDiaryDB.minimap.minimapPos == nil then
                 AzerothDiaryDB.minimap.minimapPos = oldSettings.minimapAngle or 225
+            end
+        end
+
+        -- v3: HTML export can optionally include Wowhead links/tooltips.
+        -- Existing memories already keep the relevant Blizzard IDs where available,
+        -- so no entry rewrite is necessary; mergeDefaults adds the new preference.
+        if oldSchema < 3 then
+            AzerothDiaryDB.settings = AzerothDiaryDB.settings or {}
+            if AzerothDiaryDB.settings.htmlWowheadTooltips == nil then
+                AzerothDiaryDB.settings.htmlWowheadTooltips = true
             end
         end
 

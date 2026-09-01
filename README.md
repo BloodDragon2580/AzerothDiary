@@ -1,3 +1,4 @@
+@ -1,549 +0,0 @@
 # 📖 Azeroth Diary
 
 **Your adventures. Your memories. Your story.**

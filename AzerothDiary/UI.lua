@@ -473,7 +473,7 @@ function AD:CreateExportPanel(parent)
     local generate = createButton(panel, "", 160, 32)
     generate:SetPoint("LEFT", scope, "RIGHT", 10, 0)
     generate:SetScript("OnClick", function()
-        local html, count = AD:GenerateHTML(AD.uiState.exportCurrent)
+        local html, count = AD:GenerateHTML(AD.uiState.exportCurrent, AD.db.settings.htmlWowheadTooltips == true)
         AD.exportEditBox:SetText(html)
         AD.exportEditBox:SetFocus()
         AD.exportEditBox:HighlightText()
@@ -489,8 +489,17 @@ function AD:CreateExportPanel(parent)
     status:SetJustifyH("LEFT")
     self.exportStatus = status
 
+    local wowhead = createCheckbox(panel, "")
+    wowhead:SetPoint("TOPLEFT", 20, -199)
+    wowhead:SetScript("OnClick", function(selfCheck)
+        AD.db.settings.htmlWowheadTooltips = selfCheck:GetChecked() and true or false
+        AD.exportEditBox:SetText("")
+        AD.exportStatus:SetText("")
+    end)
+    self.exportWowheadCheckbox = wowhead
+
     local codeFrame = createPanel(panel)
-    codeFrame:SetPoint("TOPLEFT", 20, -208)
+    codeFrame:SetPoint("TOPLEFT", 20, -232)
     codeFrame:SetPoint("BOTTOMRIGHT", -20, 58)
     self.exportCodeFrame = codeFrame
 
@@ -659,6 +668,7 @@ function AD:ApplyUILanguage()
     self.exportHeading:SetText(self:L("EXPORT_TITLE"))
     self.exportInfo:SetText(self:L("EXPORT_TEXT"))
     self.exportGenerateButton.text:SetText(self:L("EXPORT_GENERATE"))
+    self.exportWowheadCheckbox.label:SetText(self:L("EXPORT_WOWHEAD"))
     self.exportHint:SetText(self:L("EXPORT_COPY_HINT"))
 
     self.settingsGeneralTitle:SetText(self:L("SETTINGS_GENERAL"))
@@ -816,6 +826,9 @@ end
 function AD:RefreshExport()
     if not self.exportPanel or not self.db then return end
     self.exportScopeButton.text:SetText(self.uiState.exportCurrent and self:L("EXPORT_CURRENT") or self:L("EXPORT_ALL"))
+    if self.exportWowheadCheckbox then
+        self.exportWowheadCheckbox:SetChecked(self.db.settings.htmlWowheadTooltips == true)
+    end
 end
 
 function AD:RefreshSettings()

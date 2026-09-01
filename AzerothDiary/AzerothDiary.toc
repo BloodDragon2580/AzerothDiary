@@ -3,7 +3,7 @@
 ## Notes: Your adventures. Your memories. Your story.
 ## Notes-deDE: Deine Abenteuer. Deine Erinnerungen. Deine Geschichte.
 ## Author: BloodDragon2580
-## Version: 1.0
+## Version: 1.1
 ## SavedVariables: AzerothDiaryDB
 ## IconTexture: Interface\AddOns\ChatSignaturePlus\Media\Texture\logo
 ## Category: Collections
