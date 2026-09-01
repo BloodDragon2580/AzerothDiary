@@ -100,6 +100,8 @@ local HTML_ICONS = {
 }
 
 function AD:GenerateHTML(currentCharacterOnly, useWowhead)
+    -- Opportunistically refresh old/new transmog entries before rendering the browser diary.
+    self:RepairTransmogEntries(true)
     local entries = self:GetFilteredEntries("all", currentCharacterOnly, "")
     local stats = self:GetOverviewStats(currentCharacterOnly)
     local chunks = {}

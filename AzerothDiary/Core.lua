@@ -20,6 +20,7 @@ local trackedEvents = {
     "PLAYER_EQUIPMENT_CHANGED",
     "PLAYER_AVG_ITEM_LEVEL_UPDATE",
     "PLAYER_REGEN_ENABLED",
+    "ITEM_DATA_LOAD_RESULT",
 }
 
 local function registerTrackedEvents()
@@ -58,6 +59,7 @@ local handlers = {}
 handlers.PLAYER_LOGIN = function()
     AD:UpdateCharacterSnapshot()
     AD:InitializeTrackingBaselines()
+    AD:RepairTransmogEntries(true)
     AD:UpdateMinimapVisibility()
     if not AD.db.welcomeShown then
         AD.db.welcomeShown = true
@@ -123,6 +125,10 @@ end
 
 handlers.PLAYER_REGEN_ENABLED = function()
     AD:OnPlayerRegenEnabled()
+end
+
+handlers.ITEM_DATA_LOAD_RESULT = function(_, itemID, success)
+    AD:OnItemDataLoadResult(itemID, success)
 end
 
 eventFrame:SetScript("OnEvent", function(_, event, ...)

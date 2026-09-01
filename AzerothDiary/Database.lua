@@ -1,6 +1,6 @@
 local ADDON_NAME, AD = ...
 
-AD.VERSION = "1.1"
+AD.VERSION = "1.2"
 AD.SCHEMA_VERSION = 3
 
 AD.DEFAULTS = {
@@ -279,7 +279,7 @@ function AD:GetEntryDetail(entry)
         return self:L("ENTRY_QUEST_DETAIL")
     elseif entry.kind == "manual" then
         return d.note or ""
-    elseif entry.kind == "transmog" and d.itemLink then
+    elseif entry.kind == "transmog" and d.itemLink and self:IsUsableTransmogItemLink(d.itemLink) then
         return d.itemLink
     end
     return d.detail or ""

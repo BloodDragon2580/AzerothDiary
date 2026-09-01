@@ -98,8 +98,144 @@ function AD:OnNewToyAdded(itemID)
     })
 end
 
+local function transmogLinkLabel(itemLink)
+    if type(itemLink) ~= "string" or itemLink == "" then return nil end
+    local label = itemLink:match("|h%[(.-)%]|h")
+    if not label or label == "" then return nil end
+    return label
+end
+
+local function transmogItemIDFromLink(itemLink)
+    if type(itemLink) ~= "string" then return nil end
+    return tonumber(itemLink:match("|Hitem:(%d+)"))
+end
+
+function AD:IsFallbackTransmogName(name)
+    return not name or name == "" or name == "Neue Vorlage" or name == "New appearance"
+end
+
+function AD:IsUsableTransmogItemLink(itemLink)
+    return transmogLinkLabel(itemLink) ~= nil
+end
+
+function AD:HydrateTransmogEntry(entry, requestMissing)
+    if not entry or entry.kind ~= "transmog" then return false end
+    local d = entry.data or {}
+    entry.data = d
+
+    local sourceID = tonumber(d.sourceID)
+    local itemID = tonumber(d.itemID)
+
+    if sourceID and C_TransmogCollection then
+        if C_TransmogCollection.GetSourceInfo then
+            local ok, info = pcall(C_TransmogCollection.GetSourceInfo, sourceID)
+            if ok and type(info) == "table" then
+                itemID = tonumber(info.itemID) or itemID
+                if not self:IsFallbackTransmogName(info.name) then d.name = info.name end
+            end
+        end
+
+        if C_TransmogCollection.GetAppearanceSourceInfo then
+            local ok, info = pcall(C_TransmogCollection.GetAppearanceSourceInfo, sourceID)
+            if ok and type(info) == "table" then
+                if info.icon then d.icon = info.icon end
+                itemID = itemID or transmogItemIDFromLink(info.itemLink)
+                if self:IsUsableTransmogItemLink(info.itemLink) then
+                    d.itemLink = info.itemLink
+                    if self:IsFallbackTransmogName(d.name) then
+                        d.name = transmogLinkLabel(info.itemLink)
+                    end
+                end
+            end
+        end
+    end
+
+    itemID = itemID or transmogItemIDFromLink(d.itemLink)
+    if itemID then d.itemID = itemID end
+
+    if itemID and C_Item then
+        if C_Item.GetItemNameByID then
+            local ok, itemName = pcall(C_Item.GetItemNameByID, itemID)
+            if ok and not self:IsFallbackTransmogName(itemName) then d.name = itemName end
+        end
+
+        if C_Item.GetItemInfo then
+            local ok, itemName, itemLink, _, _, _, _, _, _, _, itemIcon = pcall(C_Item.GetItemInfo, itemID)
+            if ok then
+                if not self:IsFallbackTransmogName(itemName) then d.name = itemName end
+                if self:IsUsableTransmogItemLink(itemLink) then d.itemLink = itemLink end
+                if itemIcon then d.icon = itemIcon end
+            end
+        end
+    end
+
+    -- Blizzard can return a working hyperlink whose visible label is literally [] while
+    -- the item is not cached. Never keep/export that placeholder as diary text.
+    if d.itemLink and not self:IsUsableTransmogItemLink(d.itemLink) then
+        d.itemLink = nil
+    end
+
+    if self:IsFallbackTransmogName(d.name) then
+        d.name = self:L("UNKNOWN_TRANSMOG")
+        if requestMissing and itemID and C_Item and C_Item.RequestLoadItemDataByID then
+            self.pendingTransmogItems = self.pendingTransmogItems or {}
+            self.pendingTransmogItems[itemID] = self.pendingTransmogItems[itemID] or {}
+            self.pendingTransmogItems[itemID][entry.id] = true
+            pcall(C_Item.RequestLoadItemDataByID, tostring(itemID))
+        end
+        return false
+    end
+
+    return true
+end
+
+function AD:RepairTransmogEntries(requestMissing)
+    if not self.db or not self.db.entries then return end
+    local changed = false
+    for _, entry in ipairs(self.db.entries) do
+        if entry.kind == "transmog" then
+            local beforeName = entry.data and entry.data.name
+            local beforeLink = entry.data and entry.data.itemLink
+            local beforeItemID = entry.data and entry.data.itemID
+            self:HydrateTransmogEntry(entry, requestMissing)
+            local d = entry.data or {}
+            if beforeName ~= d.name or beforeLink ~= d.itemLink or beforeItemID ~= d.itemID then
+                changed = true
+            end
+        end
+    end
+    if changed and self.RefreshUI then self:RefreshUI() end
+end
+
+function AD:OnItemDataLoadResult(itemID, success)
+    itemID = tonumber(itemID)
+    if not itemID then return end
+
+    local pending = self.pendingTransmogItems and self.pendingTransmogItems[itemID]
+    if not pending then return end
+    local changed = false
+
+    if self.db and self.db.entries then
+        for _, entry in ipairs(self.db.entries) do
+            if entry.kind == "transmog" then
+                local d = entry.data or {}
+                local linkedID = tonumber(d.itemID) or transmogItemIDFromLink(d.itemLink)
+                if linkedID == itemID and (pending or self:IsFallbackTransmogName(d.name) or not self:IsUsableTransmogItemLink(d.itemLink)) then
+                    local beforeName, beforeLink = d.name, d.itemLink
+                    self:HydrateTransmogEntry(entry, false)
+                    if beforeName ~= d.name or beforeLink ~= d.itemLink then changed = true end
+                end
+            end
+        end
+    end
+
+    if self.pendingTransmogItems then self.pendingTransmogItems[itemID] = nil end
+    if changed and self.RefreshUI then self:RefreshUI() end
+end
+
 function AD:OnTransmogAdded(sourceID)
     if not self:IsTracking("transmog") then return end
+
     local name, itemID, itemLink, icon
     if C_TransmogCollection then
         if C_TransmogCollection.GetSourceInfo then
@@ -112,8 +248,12 @@ function AD:OnTransmogAdded(sourceID)
         if C_TransmogCollection.GetAppearanceSourceInfo then
             local ok, info = pcall(C_TransmogCollection.GetAppearanceSourceInfo, sourceID)
             if ok and type(info) == "table" then
-                itemLink = info.itemLink
+                itemLink = self:IsUsableTransmogItemLink(info.itemLink) and info.itemLink or nil
                 icon = info.icon
+                itemID = itemID or transmogItemIDFromLink(info.itemLink)
+                if self:IsFallbackTransmogName(name) and itemLink then
+                    name = transmogLinkLabel(itemLink)
+                end
             end
         end
         if not itemID and C_TransmogCollection.GetSourceItemID then
@@ -121,17 +261,22 @@ function AD:OnTransmogAdded(sourceID)
             if ok then itemID = id end
         end
     end
-    if (not name or name == "") and itemID and C_Item and C_Item.GetItemNameByID then
+
+    if self:IsFallbackTransmogName(name) and itemID and C_Item and C_Item.GetItemNameByID then
         local ok, itemName = pcall(C_Item.GetItemNameByID, itemID)
         if ok then name = itemName end
     end
-    self:AddEntry("transmog", {
+
+    local entry = self:AddEntry("transmog", {
         sourceID = sourceID,
         itemID = itemID,
         itemLink = itemLink,
-        name = name or self:L("UNKNOWN_TRANSMOG"),
+        name = (not self:IsFallbackTransmogName(name)) and name or self:L("UNKNOWN_TRANSMOG"),
         icon = icon,
     })
+
+    -- Re-check all available metadata and request uncached item data if necessary.
+    self:HydrateTransmogEntry(entry, true)
 end
 
 function AD:OnPlayerLevelUp(level)
