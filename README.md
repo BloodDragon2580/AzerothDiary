@@ -1,11 +1,3 @@
-Turn your adventures in Azeroth into memories. Azeroth Diary automatically records achievements, collections, boss kills, Mythic+, milestones and personal diary entries in a Warband-wide timeline.
-
-
-Mach deine Abenteuer in Azeroth zu Erinnerungen. Azeroth Diary zeichnet Erfolge, Sammlungen, Bosskills, Mythic+, Meilensteine und persönliche Tagebucheinträge automatisch in einer Warband-weiten Chronik auf.
-
-
-
-
 # 📖 Azeroth Diary
 
 **Your adventures. Your memories. Your story.**
@@ -278,14 +270,7 @@ Build your own history of Azeroth — one memory at a time.
 **Azeroth Diary**  
 *Your adventures. Your memories. Your story.*
 
-
-
-
-
-
-
-
-
+---
 
 # 📖 Azeroth Diary
 
