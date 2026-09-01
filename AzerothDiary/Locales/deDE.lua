@@ -126,6 +126,8 @@ AD.Locales.deDE = {
     HTML_ALL_CATEGORIES = "Alle Kategorien",
     HTML_ALL_CHARACTERS = "Alle Charaktere",
     HTML_MEMORIES = "Erinnerungen",
+    HTML_PAGE = "Seite",
+    HTML_PAGE_NAV = "Seitennavigation des Tagebuchs",
     HTML_NO_RESULTS = "Keine Erinnerungen entsprechen diesen Filtern.",
     HTML_FOOTER = "Erstellt mit Azeroth Diary für World of Warcraft",
 }

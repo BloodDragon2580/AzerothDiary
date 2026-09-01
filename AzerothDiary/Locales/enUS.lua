@@ -126,6 +126,8 @@ AD.Locales.enUS = {
     HTML_ALL_CATEGORIES = "All categories",
     HTML_ALL_CHARACTERS = "All characters",
     HTML_MEMORIES = "memories",
+    HTML_PAGE = "Page",
+    HTML_PAGE_NAV = "Diary page navigation",
     HTML_NO_RESULTS = "No memories match these filters.",
     HTML_FOOTER = "Created with Azeroth Diary for World of Warcraft",
 }
