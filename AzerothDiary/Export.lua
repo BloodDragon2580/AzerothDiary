@@ -1,0 +1,112 @@
+local ADDON_NAME, AD = ...
+
+local function stripWoWFormatting(value)
+    value = tostring(value or "")
+    value = value:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+    value = value:gsub("|H.-|h(.-)|h", "%1")
+    value = value:gsub("|T.-|t", "")
+    return value
+end
+
+local function htmlEscape(value)
+    value = stripWoWFormatting(value)
+    value = value:gsub("&", "&amp;")
+    value = value:gsub("<", "&lt;")
+    value = value:gsub(">", "&gt;")
+    value = value:gsub('"', "&quot;")
+    value = value:gsub("'", "&#39;")
+    return value
+end
+
+local function attrEscape(value)
+    return htmlEscape(value):gsub("\n", " "):gsub("\r", " ")
+end
+
+local HTML_ICONS = {
+    achievement = "🏆",
+    mount = "🐉",
+    pet = "🐾",
+    toy = "🎁",
+    transmog = "✨",
+    boss = "⚔️",
+    mythicplus = "🗝️",
+    level = "📈",
+    gold = "💰",
+    itemlevel = "🛡️",
+    quest = "📜",
+    manual = "❤️",
+}
+
+function AD:GenerateHTML(currentCharacterOnly)
+    local entries = self:GetFilteredEntries("all", currentCharacterOnly, "")
+    local stats = self:GetOverviewStats(currentCharacterOnly)
+    local chunks = {}
+    local function add(s) chunks[#chunks + 1] = s end
+
+    local language = self:GetLanguage() == "deDE" and "de" or "en"
+    local generated = self:FormatDate(time(), true)
+    local title = self:L("HTML_TITLE")
+    local subtitle = self:L("HTML_SUBTITLE")
+
+    local characters, seenChars = {}, {}
+    local categories, seenKinds = {}, {}
+    for _, entry in ipairs(entries) do
+        if entry.charKey and not seenChars[entry.charKey] then
+            seenChars[entry.charKey] = true
+            characters[#characters + 1] = { key = entry.charKey, name = entry.charName or entry.charKey, realm = entry.realm }
+        end
+        if not seenKinds[entry.kind] then
+            seenKinds[entry.kind] = true
+            categories[#categories + 1] = entry.kind
+        end
+    end
+    table.sort(characters, function(a, b) return (a.name or "") < (b.name or "") end)
+    table.sort(categories, function(a, b) return self:GetKindLabel(a) < self:GetKindLabel(b) end)
+
+    add("<!DOCTYPE html><html lang=\"" .. language .. "\"><head><meta charset=\"utf-8\">")
+    add("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>" .. htmlEscape(title) .. "</title>")
+    add([[<style>
+:root{color-scheme:dark;--bg:#080b12;--panel:#101625;--panel2:#161e30;--line:#28344e;--text:#eef2ff;--muted:#99a6c1;--gold:#d9ad5b;--blue:#69a7ff;--violet:#9a7cff;--green:#73d39b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#17213a 0,#080b12 34%,#05070c 100%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}.wrap{max-width:1180px;margin:auto;padding:42px 20px 70px}.hero{padding:34px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,rgba(217,173,91,.10),rgba(105,167,255,.04)),rgba(16,22,37,.92)}h1{font-size:clamp(2.1rem,5vw,4rem);margin:0 0 8px;letter-spacing:-.04em}.tag{color:var(--gold);font-weight:700}.muted{color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.stat{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.stat b{display:block;font-size:1.7rem;margin-top:4px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin:24px 0}.tools input,.tools select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:#0b1020;color:var(--text);font-size:1rem}.timeline{display:grid;gap:12px}.memory{display:grid;grid-template-columns:54px 1fr auto;gap:15px;align-items:start;padding:18px;border:1px solid var(--line);border-radius:16px;background:rgba(16,22,37,.92)}.memory[hidden]{display:none!important}.ico{display:grid;place-items:center;width:50px;height:50px;border-radius:14px;background:var(--panel2);font-size:1.55rem}.kind{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:800}.memory h2{font-size:1.05rem;margin:4px 0}.detail{color:var(--muted);line-height:1.5;white-space:pre-wrap}.where{margin-top:8px;color:#7f8da9;font-size:.86rem}.when{text-align:right;color:var(--muted);font-size:.84rem;white-space:nowrap}.char{color:var(--blue);font-weight:700;margin-top:5px}.empty{display:none;padding:40px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}footer{margin-top:32px;text-align:center;color:#72809c;font-size:.85rem}@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.tools{grid-template-columns:1fr}.memory{grid-template-columns:46px 1fr}.when{grid-column:2;text-align:left}.hero{padding:24px}}@media(max-width:420px){.stats{grid-template-columns:1fr}.wrap{padding:20px 12px 50px}}
+</style></head><body><main class="wrap">]])
+
+    add("<section class=\"hero\"><div class=\"tag\">" .. htmlEscape(self:L("HTML_KICKER")) .. "</div><h1>" .. htmlEscape(title) .. "</h1><p>" .. htmlEscape(subtitle) .. "</p><div class=\"muted\">" .. htmlEscape(self:L("HTML_GENERATED", generated)) .. "</div></section>")
+    add("<section class=\"stats\">")
+    add("<div class=\"stat\"><span class=\"muted\">" .. htmlEscape(self:L("TOTAL_MEMORIES")) .. "</span><b>" .. stats.total .. "</b></div>")
+    add("<div class=\"stat\"><span class=\"muted\">" .. htmlEscape(self:L("ACTIVE_DAYS")) .. "</span><b>" .. stats.activeDaysCount .. "</b></div>")
+    add("<div class=\"stat\"><span class=\"muted\">" .. htmlEscape(self:L("CHARACTERS")) .. "</span><b>" .. stats.characterCount .. "</b></div>")
+    add("<div class=\"stat\"><span class=\"muted\">" .. htmlEscape(self:L("TODAY")) .. "</span><b>" .. stats.today .. "</b></div></section>")
+
+    add("<section class=\"tools\"><input id=\"q\" type=\"search\" placeholder=\"" .. attrEscape(self:L("HTML_SEARCH")) .. "\" aria-label=\"" .. attrEscape(self:L("HTML_SEARCH")) .. "\">")
+    add("<select id=\"cat\" aria-label=\"" .. attrEscape(self:L("HTML_CATEGORY")) .. "\"><option value=\"\">" .. htmlEscape(self:L("HTML_ALL_CATEGORIES")) .. "</option>")
+    for _, kind in ipairs(categories) do
+        add("<option value=\"" .. attrEscape(kind) .. "\">" .. htmlEscape(self:GetKindLabel(kind)) .. "</option>")
+    end
+    add("</select><select id=\"char\" aria-label=\"" .. attrEscape(self:L("HTML_CHARACTER")) .. "\"><option value=\"\">" .. htmlEscape(self:L("HTML_ALL_CHARACTERS")) .. "</option>")
+    for _, char in ipairs(characters) do
+        local charLabel = char.name .. ((char.realm and char.realm ~= "") and (" — " .. char.realm) or "")
+        add("<option value=\"" .. attrEscape(char.key) .. "\">" .. htmlEscape(charLabel) .. "</option>")
+    end
+    add("</select></section><section id=\"timeline\" class=\"timeline\">")
+
+    for _, entry in ipairs(entries) do
+        local titleText = self:GetEntryTitle(entry)
+        local detail = self:GetEntryDetail(entry)
+        local location = entry.zone or ""
+        if entry.subZone and entry.subZone ~= "" and entry.subZone ~= location then
+            location = location .. " • " .. entry.subZone
+        end
+        local searchBlob = table.concat({ titleText or "", detail or "", entry.charName or "", entry.realm or "", location, self:GetKindLabel(entry.kind) or "" }, " ")
+        add("<article class=\"memory\" data-cat=\"" .. attrEscape(entry.kind) .. "\" data-char=\"" .. attrEscape(entry.charKey or "") .. "\" data-search=\"" .. attrEscape(searchBlob) .. "\">")
+        add("<div class=\"ico\">" .. (HTML_ICONS[entry.kind] or "📖") .. "</div><div><div class=\"kind\">" .. htmlEscape(self:GetKindLabel(entry.kind)) .. "</div><h2>" .. htmlEscape(titleText) .. "</h2>")
+        if detail and detail ~= "" then add("<div class=\"detail\">" .. htmlEscape(detail) .. "</div>") end
+        add("<div class=\"where\">📍 " .. htmlEscape(location) .. "</div></div><div class=\"when\">" .. htmlEscape(self:FormatDate(entry.ts, true)) .. "<div class=\"char\">" .. htmlEscape(entry.charName or entry.charKey or "") .. "</div></div></article>")
+    end
+
+    add("</section><div id=\"empty\" class=\"empty\">" .. htmlEscape(self:L("HTML_NO_RESULTS")) .. "</div><footer>" .. htmlEscape(self:L("HTML_FOOTER")) .. "</footer></main>")
+    -- Important: avoid JavaScript logical OR (double pipe) in exported text. WoW EditBox can collapse doubled pipe characters while copying.
+    add([[<script>
+const q=document.getElementById('q'),cat=document.getElementById('cat'),chr=document.getElementById('char'),cards=[...document.querySelectorAll('.memory')],empty=document.getElementById('empty');function run(){const s=q.value.trim().toLocaleLowerCase(),c=cat.value,h=chr.value;let shown=0;for(const el of cards){const rawSearch=el.dataset.search?el.dataset.search:'';const searchOk=s===''?true:rawSearch.toLocaleLowerCase().includes(s);const categoryOk=c===''?true:el.dataset.cat===c;const characterOk=h===''?true:el.dataset.char===h;const ok=searchOk&&categoryOk&&characterOk;el.hidden=!ok;if(ok)shown++}empty.style.display=shown?'none':'block'}q.addEventListener('input',run);cat.addEventListener('change',run);chr.addEventListener('change',run);run();
+</script></body></html>]])
+
+    return table.concat(chunks), #entries
+end

@@ -1,0 +1,22 @@
+## Interface: 120100, 120007, 120005
+## Title: Azeroth Diary
+## Notes: Your adventures. Your memories. Your story.
+## Notes-deDE: Deine Abenteuer. Deine Erinnerungen. Deine Geschichte.
+## Author: BloodDragon2580
+## Version: 1.0
+## SavedVariables: AzerothDiaryDB
+## IconTexture: Interface\AddOns\ChatSignaturePlus\Media\Texture\logo
+## Category: Collections
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+
+Locales\enUS.lua
+Locales\deDE.lua
+Database.lua
+Export.lua
+UI.lua
+Events.lua
+Core.lua
