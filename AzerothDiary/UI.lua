@@ -5,6 +5,7 @@ local ROWS_PER_PAGE = 7
 local TIMELINE_ROW_HEIGHT = 50
 local TIMELINE_ROW_STEP = 55
 local TIMELINE_FOOTER_HEIGHT = 36
+local EXPORTER_URL = "http://gaming-nexus.de/downloads/AzerothDiaryExporter.zip"
 
 local function setBackdrop(frame, r, g, b, a, borderA)
     frame:SetBackdrop({
@@ -168,6 +169,28 @@ function AD:CreateUI()
             if data and AD:DeleteEntry(data) then
                 print("|cffffcc55Azeroth Diary:|r " .. AD:L("DELETED"))
             end
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+
+    StaticPopupDialogs["AZEROTH_DIARY_EXPORTER_LINK"] = {
+        text = "%s",
+        button1 = CLOSE,
+        hasEditBox = true,
+        editBoxWidth = 500,
+        OnShow = function(selfPopup)
+            selfPopup.editBox:SetText(EXPORTER_URL)
+            selfPopup.editBox:SetFocus()
+            selfPopup.editBox:HighlightText()
+        end,
+        EditBoxOnEnterPressed = function(selfEdit)
+            selfEdit:HighlightText()
+        end,
+        EditBoxOnEscapePressed = function(selfEdit)
+            selfEdit:GetParent():Hide()
         end,
         timeout = 0,
         whileDead = true,
@@ -501,6 +524,21 @@ function AD:CreateExportPanel(parent)
     end)
     self.exportWowheadCheckbox = wowhead
 
+    local exporter = createButton(panel, "", 220, 30)
+    exporter:SetPoint("TOPRIGHT", -20, -194)
+    exporter:SetScript("OnClick", function()
+        StaticPopup_Show("AZEROTH_DIARY_EXPORTER_LINK", AD:L("EXPORTER_POPUP_TEXT"))
+    end)
+    exporter:HookScript("OnEnter", function(selfButton)
+        GameTooltip:SetOwner(selfButton, "ANCHOR_TOP")
+        GameTooltip:SetText(AD:L("EXPORTER_TOOLTIP_TITLE"), 1, 0.82, 0.4)
+        GameTooltip:AddLine(AD:L("EXPORTER_TOOLTIP_TEXT"), 0.85, 0.88, 0.95, true)
+        GameTooltip:AddLine(EXPORTER_URL, 0.45, 0.70, 1.0, true)
+        GameTooltip:Show()
+    end)
+    exporter:HookScript("OnLeave", function() GameTooltip:Hide() end)
+    self.exporterLinkButton = exporter
+
     local codeFrame = createPanel(panel)
     codeFrame:SetPoint("TOPLEFT", 20, -232)
     codeFrame:SetPoint("BOTTOMRIGHT", -20, 58)
@@ -672,6 +710,7 @@ function AD:ApplyUILanguage()
     self.exportInfo:SetText(self:L("EXPORT_TEXT"))
     self.exportGenerateButton.text:SetText(self:L("EXPORT_GENERATE"))
     self.exportWowheadCheckbox.label:SetText(self:L("EXPORT_WOWHEAD"))
+    self.exporterLinkButton.text:SetText(self:L("EXPORTER_BUTTON"))
     self.exportHint:SetText(self:L("EXPORT_COPY_HINT"))
 
     self.settingsGeneralTitle:SetText(self:L("SETTINGS_GENERAL"))
