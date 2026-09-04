@@ -6,9 +6,10 @@ Optionaler externer Windows-Exporter für das WoW-Addon **Azeroth Diary**.
 
 Der Exporter ist **nicht Bestandteil des WoW-Addons** und soll auch nicht in dessen CurseForge-ZIP aufgenommen werden. Der manuelle HTML-Export im Addon bleibt vollständig erhalten.
 
-## Funktionen v1.0.1
+## Funktionen v1.0.2
 
 - Portable Windows-Anwendung (`AzerothDiaryExporter.exe`), keine Installation nötig.
+- Eigenes Azeroth-Diary-App-Icon in der EXE und als Favicon der lokalen Bedienoberfläche.
 - Liest `WTF\Account\<Account>\SavedVariables\AzerothDiary.lua` ausschließlich lesend.
 - Automatische Suche nach üblichen World-of-Warcraft-Installationen und Accounts.
 - Manuelle Auswahl der `AzerothDiary.lua`, falls WoW an einem anderen Ort installiert ist.
@@ -43,4 +44,4 @@ Der Exporter liest nur die lokale `AzerothDiary.lua`. Er verändert die SavedVar
 
 ## Getrennte Versionierung
 
-Exporter und WoW-Addon werden unabhängig versioniert. Diese Version ist **Azeroth Diary Exporter v1.0.1**.
+Exporter und WoW-Addon werden unabhängig versioniert. Diese Version ist **Azeroth Diary Exporter v1.0.2**.

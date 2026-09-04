@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,7 +19,10 @@ import (
 	"time"
 )
 
-const version = "1.0.1"
+const version = "1.0.2"
+
+//go:embed icon.png
+var appIconPNG []byte
 
 type Config struct {
 	Source    string `json:"source"`
@@ -153,6 +157,11 @@ func (a *App) saveConfig() {
 }
 
 func (a *App) routes(mux *http.ServeMux) {
+	mux.HandleFunc("/icon.png", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		_, _ = w.Write(appIconPNG)
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = io.WriteString(w, webUI)

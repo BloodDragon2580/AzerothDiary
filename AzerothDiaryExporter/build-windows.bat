@@ -14,8 +14,10 @@ go test ./...
 if errorlevel 1 goto :fail
 go build -trimpath -ldflags="-H=windowsgui -s -w" -o AzerothDiaryExporter.exe .
 if errorlevel 1 goto :fail
+go run ./tools/iconpatch AzerothDiaryExporter.exe icon.ico
+if errorlevel 1 goto :fail
 echo.
-echo Fertig: AzerothDiaryExporter.exe
+echo Fertig: AzerothDiaryExporter.exe inklusive App-Icon
 pause
 exit /b 0
 :fail
