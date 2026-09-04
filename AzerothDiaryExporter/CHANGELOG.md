@@ -1,5 +1,13 @@
 # Changelog
 
+## Azeroth Diary Exporter 1.0.3
+
+- Behoben: Der Exporter konnte nach dem normalen Schließen des Browserfensters als unsichtbarer Windows-Prozess weiterlaufen.
+- Die Browser-Seite meldet ihr Schließen jetzt zusätzlich aktiv an den lokalen Exporter.
+- Fehler bzw. Abbrüche der dauerhaften Browser-Verbindung werden nun erkannt und beenden den Exporter zuverlässig.
+- Ein normales Neuladen der Exporter-Seite wird erkannt und beendet das Programm nicht versehentlich.
+- Mehrere gleichzeitig geöffnete Exporter-Tabs werden berücksichtigt.
+
 ## Azeroth Diary Exporter 1.0.2
 
 - Neues eigenes Azeroth-Diary-Exporter-Icon direkt in die Windows-EXE eingebaut.

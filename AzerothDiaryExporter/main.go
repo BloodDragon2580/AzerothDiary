@@ -19,7 +19,9 @@ import (
 	"time"
 )
 
-const version = "1.0.2"
+const version = "1.0.3"
+
+const uiCloseGrace = 4 * time.Second
 
 //go:embed icon.png
 var appIconPNG []byte
@@ -54,8 +56,10 @@ type App struct {
 	lastSize  int64
 	server    *http.Server
 	quit      chan struct{}
+	quitOnce  sync.Once
 	liveCount int
 	liveEpoch uint64
+	uiPages   map[string]time.Time
 }
 
 func main() {
@@ -104,6 +108,7 @@ func newApp() *App {
 		cfgPath: filepath.Join(dir, "config.json"),
 		status:  Status{Title: "Bereit", Message: "Exporter gestartet.", OK: true},
 		quit:    make(chan struct{}),
+		uiPages: make(map[string]time.Time),
 	}
 	a.loadConfig()
 	return a
@@ -168,6 +173,8 @@ func (a *App) routes(mux *http.ServeMux) {
 	})
 	mux.HandleFunc("/api/state", a.stateHandler)
 	mux.HandleFunc("/api/live", a.liveHandler)
+	mux.HandleFunc("/api/heartbeat", a.heartbeatHandler)
+	mux.HandleFunc("/api/ui-close", a.uiCloseHandler)
 	mux.HandleFunc("/api/config", a.configHandler)
 	mux.HandleFunc("/api/refresh", a.refreshHandler)
 	mux.HandleFunc("/api/export", a.exportHandler)
@@ -201,42 +208,100 @@ func (a *App) liveHandler(w http.ResponseWriter, r *http.Request) {
 	a.liveCount++
 	a.liveEpoch++
 	a.mu.Unlock()
-	_, _ = io.WriteString(w, "event: ready\ndata: ok\n\n")
+	if _, err := io.WriteString(w, "event: ready\ndata: ok\n\n"); err != nil {
+		a.liveDisconnected()
+		return
+	}
 	flusher.Flush()
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-	defer func() {
-		a.mu.Lock()
-		a.liveCount--
-		a.liveEpoch++
-		epoch := a.liveEpoch
-		count := a.liveCount
-		a.mu.Unlock()
-		if count == 0 {
-			go func(expected uint64) {
-				time.Sleep(5 * time.Second)
-				a.mu.RLock()
-				stillClosed := a.liveCount == 0 && a.liveEpoch == expected
-				a.mu.RUnlock()
-				if stillClosed {
-					select {
-					case <-a.quit:
-					default:
-						close(a.quit)
-					}
-				}
-			}(epoch)
-		}
-	}()
+	defer a.liveDisconnected()
 	for {
 		select {
 		case <-r.Context().Done():
 			return
 		case <-ticker.C:
-			_, _ = io.WriteString(w, ": keepalive\n\n")
+			// Do not ignore write errors. On some Windows/browser combinations the
+			// request context is not cancelled immediately when the browser closes.
+			// A failed SSE keepalive is therefore also treated as a disconnected UI.
+			if _, err := io.WriteString(w, ": keepalive\n\n"); err != nil {
+				return
+			}
 			flusher.Flush()
 		}
 	}
+}
+
+func (a *App) liveDisconnected() {
+	a.mu.Lock()
+	if a.liveCount > 0 {
+		a.liveCount--
+	}
+	a.liveEpoch++
+	epoch := a.liveEpoch
+	count := a.liveCount
+	a.mu.Unlock()
+	if count == 0 {
+		go func(expected uint64) {
+			time.Sleep(4 * time.Second)
+			a.mu.RLock()
+			stillClosed := a.liveCount == 0 && a.liveEpoch == expected
+			a.mu.RUnlock()
+			if stillClosed {
+				a.requestQuit()
+			}
+		}(epoch)
+	}
+}
+
+func (a *App) heartbeatHandler(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimSpace(r.URL.Query().Get("id"))
+	if id != "" {
+		a.mu.Lock()
+		a.uiPages[id] = time.Now()
+		a.pruneUIPagesLocked(time.Now())
+		a.mu.Unlock()
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (a *App) uiCloseHandler(w http.ResponseWriter, r *http.Request) {
+	// pagehide/beforeunload uses sendBeacon here. A page ID prevents an old
+	// unload beacon from killing a newly reloaded exporter page.
+	id := strings.TrimSpace(r.URL.Query().Get("id"))
+	a.mu.Lock()
+	if id != "" {
+		delete(a.uiPages, id)
+	}
+	a.pruneUIPagesLocked(time.Now())
+	a.mu.Unlock()
+	w.WriteHeader(http.StatusNoContent)
+	a.scheduleUIShutdown(uiCloseGrace)
+}
+
+func (a *App) scheduleUIShutdown(grace time.Duration) {
+	go func() {
+		time.Sleep(grace)
+		a.mu.Lock()
+		a.pruneUIPagesLocked(time.Now())
+		noPages := len(a.uiPages) == 0
+		a.mu.Unlock()
+		if noPages {
+			a.requestQuit()
+		}
+	}()
+}
+
+func (a *App) pruneUIPagesLocked(now time.Time) {
+	for id, seen := range a.uiPages {
+		if now.Sub(seen) > 30*time.Second {
+			delete(a.uiPages, id)
+		}
+	}
+}
+
+func (a *App) requestQuit() {
+	a.quitOnce.Do(func() { close(a.quit) })
 }
 
 func (a *App) stateHandler(w http.ResponseWriter, r *http.Request) {
@@ -332,11 +397,7 @@ func (a *App) pickOutputHandler(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) quitHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]bool{"ok": true})
-	select {
-	case <-a.quit:
-	default:
-		close(a.quit)
-	}
+	a.requestQuit()
 }
 
 func (a *App) setStatus(title, msg string, ok bool) {

@@ -6,7 +6,7 @@ Optionaler externer Windows-Exporter für das WoW-Addon **Azeroth Diary**.
 
 Der Exporter ist **nicht Bestandteil des WoW-Addons** und soll auch nicht in dessen CurseForge-ZIP aufgenommen werden. Der manuelle HTML-Export im Addon bleibt vollständig erhalten.
 
-## Funktionen v1.0.2
+## Funktionen v1.0.3
 
 - Portable Windows-Anwendung (`AzerothDiaryExporter.exe`), keine Installation nötig.
 - Eigenes Azeroth-Diary-App-Icon in der EXE und als Favicon der lokalen Bedienoberfläche.
@@ -32,7 +32,7 @@ Der Exporter ist **nicht Bestandteil des WoW-Addons** und soll auch nicht in des
 2. Der Exporter öffnet seine lokale Bedienoberfläche im Standardbrowser.
 3. Normalerweise wird `AzerothDiary.lua` automatisch gefunden. Falls nicht, über **Datei wählen** auswählen.
 4. Ziel für `AzerothDiary.html` festlegen.
-5. **Jetzt exportieren** drücken oder den automatischen Export aktivieren. Für den Auto-Export die Exporter-Seite geöffnet lassen. Beim Schließen der Seite beendet sich der Exporter automatisch.
+5. **Jetzt exportieren** drücken oder den automatischen Export aktivieren. Für den Auto-Export die Exporter-Seite geöffnet lassen. Beim Schließen der Exporter-Seite oder des Browserfensters beendet sich der Exporter automatisch. Ein zusätzlicher **Exporter beenden**-Button bleibt weiterhin vorhanden.
 
 ## Wann werden neue WoW-Daten sichtbar?
 
@@ -44,4 +44,9 @@ Der Exporter liest nur die lokale `AzerothDiary.lua`. Er verändert die SavedVar
 
 ## Getrennte Versionierung
 
-Exporter und WoW-Addon werden unabhängig versioniert. Diese Version ist **Azeroth Diary Exporter v1.0.2**.
+Exporter und WoW-Addon werden unabhängig versioniert. Diese Version ist **Azeroth Diary Exporter v1.0.3**.
+
+
+### Änderung in v1.0.3
+
+Der lokale Hintergrundprozess wird jetzt auch beim normalen Schließen des Browserfensters zuverlässig beendet.

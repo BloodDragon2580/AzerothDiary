@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Azeroth Diary Exporter – Anleitung</title>
+  <meta name="description" content="Benutzeranleitung für den Azeroth Diary Exporter v1.0.3">
+  <style>
+    :root {
+      --bg: #08101d;
+      --bg2: #0d1728;
+      --card: rgba(17, 28, 47, .92);
+      --card2: rgba(12, 22, 38, .95);
+      --line: #2a3a57;
+      --text: #eaf1ff;
+      --muted: #9eb3d6;
+      --gold: #f2b84b;
+      --gold2: #ffd778;
+      --blue: #67a8ff;
+      --green: #66d6a4;
+      --red: #ff8b8b;
+      --shadow: 0 20px 60px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(44, 87, 151, .22), transparent 35%),
+        radial-gradient(circle at top right, rgba(242, 184, 75, .08), transparent 30%),
+        linear-gradient(180deg, #07101e 0%, #0a1423 45%, #08101c 100%);
+      line-height: 1.65;
+    }
+
+    a { color: var(--blue); }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 56px;
+    }
+
+    .hero {
+      padding: 38px 40px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(25,39,65,.98), rgba(14,24,41,.96)),
+        var(--card);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -90px;
+      top: -120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(242,184,75,.18), transparent 66%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      font-size: .86rem;
+    }
+
+    h1 {
+      margin: 8px 0 10px;
+      font-size: clamp(2.3rem, 6vw, 4.5rem);
+      line-height: 1;
+      letter-spacing: -.04em;
+    }
+
+    .lead {
+      max-width: 760px;
+      color: #b7c8e6;
+      font-size: 1.08rem;
+      margin: 0;
+    }
+
+    .version {
+      display: inline-flex;
+      margin-top: 18px;
+      padding: 7px 11px;
+      border: 1px solid rgba(242,184,75,.35);
+      color: var(--gold2);
+      background: rgba(242,184,75,.08);
+      border-radius: 999px;
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    .notice {
+      margin-top: 22px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      background: rgba(242,184,75,.08);
+      color: #dfe9fb;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0,1fr);
+      gap: 24px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    nav {
+      position: sticky;
+      top: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: var(--card2);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    nav strong {
+      display: block;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    nav a {
+      display: block;
+      color: #b9c9e6;
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 9px;
+      font-size: .95rem;
+    }
+
+    nav a:hover {
+      color: white;
+      background: rgba(103,168,255,.10);
+    }
+
+    main {
+      display: grid;
+      gap: 18px;
+    }
+
+    section {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 18px;
+      padding: 26px;
+      box-shadow: 0 12px 34px rgba(0,0,0,.16);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      color: var(--gold2);
+      font-size: 1.45rem;
+    }
+
+    h3 {
+      margin: 22px 0 8px;
+      color: #d8e5fb;
+      font-size: 1.05rem;
+    }
+
+    p { margin: 10px 0; }
+
+    ul, ol { padding-left: 1.35rem; }
+    li { margin: 6px 0; }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 10px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .feature-grid li {
+      border: 1px solid rgba(103,168,255,.18);
+      background: rgba(103,168,255,.055);
+      padding: 11px 12px;
+      border-radius: 11px;
+      margin: 0;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      color: #dce9ff;
+      background: #07101d;
+      border: 1px solid #273753;
+      border-radius: 7px;
+      padding: 2px 6px;
+      overflow-wrap: anywhere;
+    }
+
+    .path {
+      display: block;
+      margin: 12px 0;
+      padding: 13px 14px;
+      overflow-x: auto;
+    }
+
+    .tip, .warning, .privacy {
+      margin: 15px 0 0;
+      padding: 14px 16px;
+      border-radius: 11px;
+    }
+
+    .tip {
+      border: 1px solid rgba(102,214,164,.28);
+      background: rgba(102,214,164,.07);
+    }
+
+    .warning {
+      border: 1px solid rgba(255,139,139,.28);
+      background: rgba(255,139,139,.07);
+    }
+
+    .privacy {
+      border: 1px solid rgba(103,168,255,.28);
+      background: rgba(103,168,255,.07);
+    }
+
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+    }
+
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 4px 0 14px 46px;
+      min-height: 42px;
+    }
+
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(180deg, var(--gold2), var(--gold));
+      color: #17120a;
+      font-weight: 900;
+      box-shadow: 0 6px 18px rgba(242,184,75,.18);
+    }
+
+    footer {
+      text-align: center;
+      color: #8298bc;
+      padding: 28px 12px 0;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      nav {
+        display: grid;
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        gap: 4px;
+      }
+      nav strong { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 620px) {
+      .page { width: min(100% - 20px, 1120px); padding-top: 10px; }
+      .hero { padding: 27px 22px; border-radius: 18px; }
+      section { padding: 20px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      nav { grid-template-columns: 1fr; }
+      h1 { font-size: 2.7rem; }
+    }
+
+    @media print {
+      body { background: white; color: black; }
+      .page { width: 100%; }
+      nav { display: none; }
+      .layout { display: block; }
+      .hero, section {
+        background: white;
+        color: black;
+        box-shadow: none;
+        border-color: #bbb;
+      }
+      h2, .eyebrow, .version { color: #8b5b00; }
+      code { color: black; background: #f3f3f3; border-color: #bbb; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="eyebrow">World of Warcraft · Benutzeranleitung</div>
+      <h1>Azeroth Diary Exporter</h1>
+      <p class="lead">
+        Der Azeroth Diary Exporter ist ein optionales Windows-Programm für das WoW-Addon
+        <strong>Azeroth Diary</strong>. Damit kannst du deine gespeicherten Erinnerungen
+        aus World of Warcraft auslesen und als übersichtliche HTML-Chronik exportieren.
+      </p>
+      <div class="version">Version 1.0.3</div>
+
+      <div class="notice">
+        <strong>Wichtig:</strong> Der Exporter ist optional. Der manuelle HTML-Export direkt im
+        WoW-Addon funktioniert weiterhin wie gewohnt.
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav aria-label="Inhaltsverzeichnis">
+        <strong>Inhalt</strong>
+        <a href="#funktionen">Funktionen</a>
+        <a href="#installation">Installation</a>
+        <a href="#erster-start">Erster Start</a>
+        <a href="#nicht-gefunden">Datei nicht gefunden</a>
+        <a href="#exportieren">HTML exportieren</a>
+        <a href="#chronik">Deine Chronik</a>
+        <a href="#auto-export">Auto-Export</a>
+        <a href="#daten">Neue WoW-Daten</a>
+        <a href="#wowhead">Wowhead</a>
+        <a href="#datenschutz">Datenschutz</a>
+        <a href="#schliessen">Exporter schließen</a>
+        <a href="#probleme">Probleme?</a>
+      </nav>
+
+      <main>
+        <section id="funktionen">
+          <h2>Funktionen</h2>
+          <ul class="feature-grid">
+            <li>Portable Windows-Anwendung – keine Installation erforderlich</li>
+            <li>Automatische Erkennung der WoW-Installation</li>
+            <li>Automatische Erkennung der Azeroth-Diary-SavedVariables</li>
+            <li>Unterstützt mehrere WoW-Accounts</li>
+            <li>Manuelle Dateiauswahl als Fallback</li>
+            <li>Manueller und automatischer HTML-Export</li>
+            <li>Deutsche und englische Benutzeroberfläche</li>
+            <li>Kalender mit Jahr-, Monat- und Tagesauswahl</li>
+            <li>Suche nach Erinnerungen</li>
+            <li>Kategorie- und Charakterfilter</li>
+            <li>20 Erinnerungen pro Seite</li>
+            <li>Optionale Wowhead-Links und Tooltips</li>
+            <li>Frei wählbarer Speicherort für die HTML-Datei</li>
+          </ul>
+        </section>
+
+        <section id="installation">
+          <h2>Installation</h2>
+          <p>Eine Installation ist nicht notwendig.</p>
+          <ol class="steps">
+            <li>Lade den <strong>Azeroth Diary Exporter</strong> herunter.</li>
+            <li>Entpacke die ZIP-Datei in einen beliebigen Ordner.</li>
+            <li>Starte <code>AzerothDiaryExporter.exe</code>.</li>
+            <li>Die Benutzeroberfläche öffnet sich automatisch in deinem Standardbrowser.</li>
+          </ol>
+          <div class="privacy">
+            Der Exporter läuft dabei nur lokal auf deinem Computer.
+          </div>
+        </section>
+
+        <section id="erster-start">
+          <h2>Erster Start</h2>
+          <p>
+            Beim Start versucht der Exporter automatisch, deine World-of-Warcraft-Installation
+            und die Datei <code>AzerothDiary.lua</code> zu finden.
+          </p>
+          <p>Die Datei befindet sich normalerweise unter:</p>
+          <code class="path">World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\AzerothDiary.lua</code>
+          <p>Wenn mehrere WoW-Accounts gefunden werden, kannst du den gewünschten Account auswählen.</p>
+        </section>
+
+        <section id="nicht-gefunden">
+          <h2>AzerothDiary.lua wird nicht gefunden</h2>
+          <p>Falls deine WoW-Installation nicht automatisch erkannt wird:</p>
+          <ol class="steps">
+            <li>Klicke auf <strong>Datei wählen</strong>.</li>
+            <li>Öffne deinen World-of-Warcraft-Ordner.</li>
+            <li>Navigiere zu folgendem Ordner:</li>
+          </ol>
+          <code class="path">World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\</code>
+          <p>Wähle anschließend die Datei <code>AzerothDiary.lua</code> aus.</p>
+        </section>
+
+        <section id="exportieren">
+          <h2>HTML exportieren</h2>
+          <ol class="steps">
+            <li>Lege den Speicherort für deine HTML-Datei fest.</li>
+            <li>Klicke auf <strong>Jetzt exportieren</strong>.</li>
+            <li>Der Exporter erstellt <code>AzerothDiary.html</code>.</li>
+          </ol>
+          <p>
+            Danach kannst du die Datei direkt über <strong>HTML öffnen</strong> aufrufen.
+            Die erzeugte HTML funktioniert unabhängig vom Exporter und kann jederzeit mit
+            einem normalen Webbrowser geöffnet werden.
+          </p>
+        </section>
+
+        <section id="chronik">
+          <h2>Deine Chronik</h2>
+          <p>Die erzeugte HTML-Datei enthält deine gespeicherten Azeroth-Diary-Erinnerungen.</p>
+          <p>Du kannst deine Chronik filtern nach:</p>
+          <ul>
+            <li>Suchbegriff</li>
+            <li>Kategorie</li>
+            <li>Charakter</li>
+            <li>Jahr</li>
+            <li>Monat</li>
+            <li>Tag</li>
+          </ul>
+          <p>
+            Zusätzlich gibt es eine Kalenderansicht. Tage mit vorhandenen Erinnerungen werden
+            markiert, sodass du schnell nachsehen kannst, was du an einem bestimmten Tag in
+            Azeroth erlebt hast.
+          </p>
+        </section>
+
+        <section id="auto-export">
+          <h2>Automatischer Export</h2>
+          <p>Du kannst im Exporter den <strong>Auto-Export</strong> aktivieren.</p>
+          <p>
+            Der Exporter überwacht dann deine <code>AzerothDiary.lua</code>. Sobald World of
+            Warcraft die Datei aktualisiert, wird deine HTML-Chronik automatisch neu erstellt.
+          </p>
+          <div class="tip">
+            Der Auto-Export funktioniert nur, solange der Azeroth Diary Exporter geöffnet ist.
+          </div>
+        </section>
+
+        <section id="daten">
+          <h2>Wann werden neue Erinnerungen exportiert?</h2>
+          <p>
+            World of Warcraft schreibt Addon-Daten nicht nach jedem einzelnen Ereignis sofort
+            auf die Festplatte.
+          </p>
+          <p>Neue Erinnerungen werden normalerweise gespeichert, wenn du:</p>
+          <ul>
+            <li><code>/reload</code> ausführst</li>
+            <li>dich aus deinem Charakter ausloggst</li>
+            <li>World of Warcraft beendest</li>
+          </ul>
+          <p>Erst danach kann der Azeroth Diary Exporter die neuen Daten sehen.</p>
+          <div class="tip">
+            Wenn eine neue Erinnerung noch nicht in deiner HTML erscheint, führe im WoW-Chat
+            <code>/reload</code> aus. Danach sollte der Auto-Export die HTML-Datei aktualisieren.
+          </div>
+        </section>
+
+        <section id="wowhead">
+          <h2>Wowhead-Links und Tooltips</h2>
+          <p>
+            Der Exporter kann optional Wowhead-Unterstützung in deine HTML-Chronik einbauen.
+            Dadurch können beispielsweise Gegenstände direkt mit Wowhead verknüpft werden.
+          </p>
+          <p>
+            Wenn Wowhead-Tooltips aktiviert sind, benötigt dein Browser beim Öffnen der HTML-Datei
+            eine Internetverbindung, um das öffentliche Wowhead-Tooltip-Script zu laden.
+          </p>
+          <p>Deine Azeroth-Diary-Daten werden dadurch nicht an einen eigenen Exporter-Server übertragen.</p>
+        </section>
+
+        <section id="datenschutz">
+          <h2>Datenschutz</h2>
+          <p>
+            Der Azeroth Diary Exporter arbeitet lokal auf deinem Computer und liest ausschließlich
+            deine <code>AzerothDiary.lua</code>.
+          </p>
+          <p>Der Exporter:</p>
+          <ul>
+            <li>verändert keine World-of-Warcraft-Dateien</li>
+            <li>verändert keine SavedVariables</li>
+            <li>benötigt keinen Battle.net-Login</li>
+            <li>benötigt keinen Azeroth-Diary-Account</li>
+            <li>lädt deine Tagebuchdaten nicht auf einen Server hoch</li>
+          </ul>
+          <div class="privacy"><strong>Deine Chronik bleibt auf deinem Computer.</strong></div>
+        </section>
+
+        <section id="schliessen">
+          <h2>Exporter schließen</h2>
+          <p>
+            Wenn du die Browser-Seite des Exporters schließt, wird auch der lokale
+            Exporter-Prozess automatisch beendet.
+          </p>
+          <p>
+            Beim nächsten Start von <code>AzerothDiaryExporter.exe</code> wird die Oberfläche
+            wieder geöffnet.
+          </p>
+        </section>
+
+        <section id="probleme">
+          <h2>Probleme?</h2>
+
+          <h3>Neue Erinnerungen fehlen</h3>
+          <p>
+            Führe in World of Warcraft <code>/reload</code> aus und warte kurz auf den automatischen
+            Export. Alternativ kannst du danach im Exporter auf <strong>Jetzt exportieren</strong> klicken.
+          </p>
+
+          <h3>Falscher WoW-Account ausgewählt</h3>
+          <p>
+            Wähle im Exporter die <code>AzerothDiary.lua</code> des richtigen WoW-Accounts aus.
+            Jeder WoW-Account besitzt einen eigenen SavedVariables-Ordner.
+          </p>
+
+          <h3>Windows zeigt beim Start eine Warnung</h3>
+          <p>
+            Der Azeroth Diary Exporter ist eine portable Anwendung und möglicherweise nicht digital
+            signiert. Windows SmartScreen kann deshalb beim ersten Start eine Sicherheitsabfrage anzeigen.
+          </p>
+          <div class="warning">
+            Wenn du den Exporter von der offiziellen Azeroth-Diary-Downloadseite heruntergeladen hast,
+            kannst du über <strong>Weitere Informationen</strong> die Anwendung starten.
+          </div>
+        </section>
+
+        <section>
+          <h2>Azeroth Diary</h2>
+          <p>
+            Der Azeroth Diary Exporter ist eine optionale Ergänzung für das World-of-Warcraft-Addon
+            <strong>Azeroth Diary</strong>.
+          </p>
+          <p>
+            Du kannst Azeroth Diary weiterhin vollständig ohne den externen Exporter verwenden und
+            deine Chronik direkt aus dem Addon manuell als HTML exportieren.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      Azeroth Diary Exporter v1.0.3 · Benutzeranleitung
+    </footer>
+  </div>
+</body>
+</html>
