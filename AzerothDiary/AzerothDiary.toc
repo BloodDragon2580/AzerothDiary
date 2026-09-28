@@ -1,9 +1,9 @@
-## Interface: 120100, 120007, 120005
+## Interface: 120100, 120007, 120005, 120105
 ## Title:|cffd6266cAzeroth Diary|r
 ## Notes: Your adventures. Your memories. Your story.
 ## Notes-deDE: Deine Abenteuer. Deine Erinnerungen. Deine Geschichte.
 ## Author: BloodDragon2580
-## Version: 1.4
+## Version: 1.5
 ## SavedVariables: AzerothDiaryDB
 ## IconTexture: Interface\AddOns\ChatSignaturePlus\Media\Texture\logo
 ## Category: Collections
